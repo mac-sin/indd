@@ -1,0 +1,15 @@
+.DS_Store
+
+cache
+
+databases
+
+errors/*
+
+languages/*
+
+progress.log
+
+sessions/*
+
+languages/*

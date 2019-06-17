@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+isMigrate = True
 # -------------------------------------------------------------------------
 # AppConfig configuration made easy. Look inside private/appconfig.ini
 # Auth is for authenticaiton and access control
@@ -153,3 +153,59 @@ if configuration.get('scheduler.enabled'):
 # after defining tables, uncomment below to enable auditing
 # -------------------------------------------------------------------------
 # auth.enable_record_versioning(db)
+## ============================================================= ##
+## ====== ====== ## ## ====== inddpdf ====== ## ## ====== ====== ##
+## ============================================================= ##
+def my_string_widget(field, value):
+    return INPUT(_name=field.name,
+                 _id="%s_%s" % (field._tablename, field.name),
+                 _class=field.type,
+                 _value=value,
+                 # _style='color:blue',
+                 requires=field.requires)
+
+db.define_table('exportlist',
+    Field('filepath', requires=IS_NOT_EMPTY(), widget=my_string_widget),
+    Field('pdfpreset', requires=IS_IN_SET(['pdf_150ppi','pdf_150ppi_single','Toppan_pdf_31Dec2012']), widget=my_string_widget),
+    Field('pagerange', requires=IS_NOT_EMPTY(), widget=my_string_widget),
+    Field('createdate', 'datetime', default=request.now, writable=False, readable=False),
+    Field('status',default='Idle', requires=IS_IN_SET(['Idle','Processing','Finish','Error']), widget=SQLFORM.widgets.radio.widget),
+    Field('errormessage', widget=my_string_widget),
+    Field('folderpath', requires=IS_NOT_EMPTY(), widget=my_string_widget),
+    Field('filename', requires=IS_NOT_EMPTY(), widget=my_string_widget),
+    Field('filepath_copy', requires=IS_NOT_EMPTY(), widget=my_string_widget),
+    Field('exectime', 'integer', writable=False, readable=True ),
+    Field('mdate', 'datetime', writable=False, readable=False),
+    Field('inddname',writable=False, readable=False),
+    migrate=isMigrate
+    )
+
+db.define_table('onidle',
+    Field('name', requires=IS_NOT_EMPTY()),
+    Field('status', requires=IS_NOT_EMPTY()),
+    Field('createdate', 'datetime', default=request.now, writable=False, readable=False),
+    migrate=isMigrate
+    )
+
+
+## ============================================================= ##
+## ====== ====== ## ## ====== inddjpg ====== ## ## ====== ====== ##
+## ============================================================= ##
+db.define_table('exportjpg',
+    Field('filepath', requires=IS_NOT_EMPTY(), widget=my_string_widget),
+    Field('exportRangeOrAllPages', default='EXPORT_RANGE', requires=IS_IN_SET(['EXPORT_RANGE','EXPORT_ALL']), widget=SQLFORM.widgets.radio.widget),
+    Field('exportingSpread','boolean', default=False),
+    Field('jpegQuality', default='MEDIUM', requires=IS_IN_SET(['LOW','MEDIUM','HIGH','MAXIMUM'])),
+    Field('exportResolution', 'integer', default=150, requires=IS_IN_SET([72,150,300])),
+    Field('pageString'),
+    Field('cdate', 'datetime', default=request.now, writable=False, readable=False),
+    Field('status', default='Idle', requires=IS_IN_SET(['Idle','Processing','Finish','Error']), widget=SQLFORM.widgets.radio.widget),
+    Field('errormessage', widget=my_string_widget),
+    Field('folderpath', requires=IS_NOT_EMPTY(), widget=my_string_widget),
+    Field('filename', requires=IS_NOT_EMPTY(), widget=my_string_widget),
+    Field('filepath_copy', requires=IS_NOT_EMPTY(), widget=my_string_widget),
+    Field('exectime', 'integer', writable=False, readable=True ),
+    Field('mdate', 'datetime', writable=False, readable=False),
+    Field('inddname',writable=False, readable=False),
+    migrate=isMigrate
+    )

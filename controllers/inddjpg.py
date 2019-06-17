@@ -9,8 +9,10 @@ def index():
     oldday = datetime.datetime(2009, 7, 22)
     # response.flash = today
     if request.args(0):
-        row = db.exportlist(request.args(0,cast=int))
-        form = SQLFORM(db.exportlist, row, deletable=True, showid=False, formstyle='bootstrap3_stacked', fields=['pdfpreset','pagerange','status','errormessage'])
+        row = db.exportjpg(request.args(0,cast=int))
+        form = SQLFORM(db.exportjpg, row, deletable=True, showid=False, formstyle='bootstrap3_stacked',
+                        fields=['exportRangeOrAllPages','pageString','exportingSpread','jpegQuality','exportResolution','status','errormessage']
+                        )
         my_extra_element = DIV(
                                 LABEL('Filepath',_class='conrol-label'),
                                 PRE(row['filepath'], _class='text-light text'),
@@ -18,14 +20,22 @@ def index():
                                 )
         form[0].insert(0,my_extra_element)
     else:
-        form = SQLFORM(db.exportlist, formstyle='bootstrap3_stacked')
+        form = SQLFORM(db.exportjpg, formstyle='bootstrap3_stacked')
     # form['_style']='background-color:#343a40'
     if form.process().accepted:
         response.flash = 'record inserted'
-        redirect(URL(r=request,c='inddpdf',f='index'))
+        redirect(URL(r=request,c='inddjpg',f='index'))
     return locals()
 
-def getExportList():
+
+def getExportJpgById():
+    if not request.args(0):
+        return False;
+    data = db(db.exportjpg.id==request.args(0)).select().as_dict()
+    return response.json(data)
+
+
+def getExportJpgList():
     draw = int(request.vars.draw)
     start = int(request.vars.start)
     length = start + int(request.vars.length)
@@ -33,17 +43,17 @@ def getExportList():
     # orderColumn = request.vars["order[0][column]"]
     # orderBy = request.vars["columns["+ orderColumn +"][data]"]
     # orderType = request.vars["order[0][dir]"]
-    # orderQuery = "exportlist."+orderBy+" "+orderType
-    orderQuery = "exportlist.id desc"
-    recordsTotal = db(db.exportlist).count()
+    # orderQuery = "exportjpg."+orderBy+" "+orderType
+    orderQuery = "exportjpg.id desc"
+    recordsTotal = db(db.exportjpg).count()
     if searchValue:
-        recordsFiltered = db((db.exportlist.filepath.contains(searchValue))|(db.exportlist.status.contains(searchValue))).count()
-        datas = db((db.exportlist.filepath.contains(searchValue))|(db.exportlist.status.contains(searchValue))).select(orderby=orderQuery,limitby=(start,length)).as_list()
+        recordsFiltered = db((db.exportjpg.filepath.contains(searchValue))|(db.exportjpg.status.contains(searchValue))).count()
+        datas = db((db.exportjpg.filepath.contains(searchValue))|(db.exportjpg.status.contains(searchValue))).select(orderby=orderQuery,limitby=(start,length)).as_list()
     else:
-        datas = db(db.exportlist).select(orderby=orderQuery,limitby=(start,length)).as_list()
+        datas = db(db.exportjpg).select(orderby=orderQuery,limitby=(start,length)).as_list()
         recordsFiltered = recordsTotal
-    data = {"draw":draw, "recordsTotal":recordsTotal, "recordsFiltered":recordsFiltered, "data":datas }
-    data["q"] = sj.dumps( request.vars )
+    data = { "draw":draw, "recordsTotal":recordsTotal, "recordsFiltered":recordsFiltered, "data":datas }
+    # data["q"] = sj.dumps( request.vars )
     data["method"] = request.env.request_method
     data["ajax"] = request.ajax
     data["start"] = start
@@ -54,10 +64,12 @@ def getExportList():
     data["searchValue"] = searchValue
     return response.json(data)
 
+
 def connect():
     conn = {'connect':True, 'host':request.env.http_host}
     # return dict(conn=conn)
     return sj.dumps( conn )
+
 
 def launchApp():
     import subprocess
@@ -74,6 +86,7 @@ def launchApp():
         warning = True
         message = request.function + " error."
     return sj.dumps( dict(success=success, warning=warning, message=message, id=request.vars.id) )
+
 
 def openFile():
     import subprocess
@@ -102,6 +115,7 @@ end tell
         warning = True
         message = request.function + " error."
     return sj.dumps( dict(success=success, warning=warning, message=message, id=request.vars.id) )
+
 
 def alertCount():
     import subprocess
@@ -140,6 +154,7 @@ end tell
     result = dict( stdout=stdout, stderr=stderr, args=args, host=request.env.http_host, success=success, warning=warning, message=message, id=request.vars.id )
     return sj.dumps( result )
 
+
 def checkAppStatus():
     import subprocess
     scriptName = 'x_checkStatus.jsx'
@@ -172,6 +187,7 @@ end tell
         message = request.function + " error."
     result = dict( stdout=stdout, stderr=stderr, args=args, host=request.env.http_host, success=success, warning=warning, message=message, id=request.vars.id )
     return sj.dumps( result )
+
 
 def backgroundTasks():
     import subprocess
@@ -206,6 +222,7 @@ end tell
     result = dict( stdout=stdout, stderr=stderr, args=args, host=request.env.http_host, success=success, warning=warning, message=message, id=request.vars.id )
     return sj.dumps( result )
 
+
 def addIdleTask():
     import subprocess
     scriptName = 'x_idle_onIdle.jsx'
@@ -236,6 +253,7 @@ end tell
         warning = True
         message = request.function + " error."
     return sj.dumps( dict(success=success, warning=warning, message=message, id=request.vars.id) )
+
 
 def removeIdleTasks():
     import subprocess
@@ -268,6 +286,7 @@ end tell
         message = request.function + " error."
     return sj.dumps( dict(success=success, warning=warning, message=message, id=request.vars.id) )
 
+
 def getFolders():
     start_time = time.time()
     currentpath = request.vars.selectfolder
@@ -276,7 +295,7 @@ def getFolders():
     import os
     inddfiles = []
     child = []
-    if currentpath == "/Volumes":
+    if currentpath == "/":
         return sj.dumps( dict(currentpath="null") )
     # if currentpath != "/Volumes/Public1":
     #     child.append(dict(name="..", path=".."))
@@ -303,21 +322,31 @@ def getFolders():
     currentname = currentpath.split("/")
     currentname = currentname[-1]
     elapsed_time = time.time() - start_time
+
     result = dict(currentname=currentname, currentpath=currentpath, child=child, inddfiles=inddfiles, childlength=len(child)-1, inddfileslength=len(inddfiles) )
     return sj.dumps(result)
 
+
 def newExportRequest():
+    id = request.vars.id
     filepath = request.vars.filepath
-    pdfpreset = request.vars.pdfpreset
-    pagerange = request.vars.pagerange
+    exportRangeOrAllPages = request.vars.exportRangeOrAllPages
+    pageString = request.vars.pageString
+    exportingSpread = request.vars.exportingSpread
+    jpegQuality = request.vars.jpegQuality
+    exportResolution = request.vars.exportResolution
     fp = filepath.split("/")
     filename = fp.pop()
     folderpath = ("/").join(fp)
     # filepath_copy = folderpath +"/copy_"+ filename
     fn = "/"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S")+"_"
     filepath_copy = folderpath + fn + filename
-    result = db.exportlist.insert(filepath=filepath, pdfpreset=pdfpreset, pagerange=pagerange, filename=filename, folderpath=folderpath, filepath_copy=filepath_copy)
+    if not id:
+        result = db.exportjpg.insert(filepath=filepath, exportRangeOrAllPages=exportRangeOrAllPages, pageString=pageString, exportingSpread=exportingSpread, jpegQuality=jpegQuality, exportResolution=exportResolution, filename=filename, folderpath=folderpath, filepath_copy=filepath_copy)
+    else:
+        result = db(db.exportjpg.id==id).update(filepath=filepath, exportRangeOrAllPages=exportRangeOrAllPages, pageString=pageString, exportingSpread=exportingSpread, jpegQuality=jpegQuality, exportResolution=exportResolution, filename=filename, folderpath=folderpath, filepath_copy=filepath_copy)
     return sj.dumps( result )
+
 
 def onIdle():
     if request.args(0)=="new":
@@ -330,6 +359,7 @@ def onIdle():
     else:
         data = db(db.onidle).select(orderby="onidle.id DESC",limitby=(0,20))
     return dict(data=data)
+
 
 def getOnIdles():
     """
@@ -398,13 +428,14 @@ def getOnIdles():
     data["searchValue"] = searchValue
     return response.json(data)
 
+
 def job():
-    count = db(db.exportlist.status=="Idle").count()
+    count = db(db.exportjpg.status=="Idle").count()
     if count==0:
         return "no_data"
     try:
-        data = db(db.exportlist.status=="Idle").select().first().as_dict()
-        data["createdate"] = str( data["createdate"] )
+        data = db(db.exportjpg.status=="Idle").select().first().as_dict()
+        data["cdate"] = str( data["cdate"] )
         data["mdate"] = str( data["mdate"] )
         fp = data["filepath"]
         fpc = data["filepath_copy"]
@@ -413,11 +444,12 @@ def job():
         if subprocess.call( command, shell=True )==0:
             return sj.dumps( data )
         else:
-            db(db.exportlist.id==data["id"]).update(status="Error",errormessage="indd_file_not_find")
+            db(db.exportjpg.id==data["id"]).update(status="Error",errormessage="indd_file_not_find")
             return "indd_file_not_find"
     except Exception, e:
         return e
     #     return sj.dumps( dict(error=e) )
+
 
 def updatejob():
     id = int(request.vars.jobid)
@@ -428,10 +460,10 @@ def updatejob():
         execTime = int(request.vars.exectime)
     errormessage = request.vars.errormessage
     if status=="P":
-        db(db.exportlist.id==id).update(status="Processing", errormessage="", inddname=inddname)
+        db(db.exportjpg.id==id).update(status="Processing", errormessage="", inddname=inddname)
     elif status=="E":
-        db(db.exportlist.id==id).update(status="Error", errormessage=errormessage, inddname=inddname )
-        data = db(db.exportlist.id==id).select().first().as_dict()
+        db(db.exportjpg.id==id).update(status="Error", errormessage=errormessage, inddname=inddname )
+        data = db(db.exportjpg.id==id).select().first().as_dict()
         fp = data["filepath"].split("/")
         data["fileName"] = fp.pop()
         data["folderPath"] = ("/").join(fp)
@@ -441,8 +473,8 @@ def updatejob():
         # if subprocess.call( command, shell=True )==0:
         return dict()
     elif status=="F":
-        db(db.exportlist.id==id).update(status="Finish", errormessage="", exectime=execTime, mdate=request.now, inddname=inddname)
-        data = db(db.exportlist.id==id).select().first().as_dict()
+        db(db.exportjpg.id==id).update(status="Finish", errormessage="", exectime=execTime, mdate=request.now, inddname=inddname)
+        data = db(db.exportjpg.id==id).select().first().as_dict()
         fp = data["filepath"].split("/")
         data["fileName"] = fp.pop()
         data["folderPath"] = ("/").join(fp)
@@ -452,4 +484,3 @@ def updatejob():
         # if subprocess.call( command, shell=True )==0:
         # return dict()
     return dict()
-

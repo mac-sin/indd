@@ -1,0 +1,99 @@
+{{extend 'mylayout.html'}}
+{{block head}}
+{{include 'cdn_datatables.html'}}
+
+<style>
+.no-padding{ padding-left:0px; padding-right:0px; }
+.no-margin{ margin-left:0px; margin-right:0px; }
+.text{ word-wrap: break-word; }
+.bg-gray{ background-color: #ccc; }
+.border-black{ border: 1px solid black; }
+.error{ color:red; }
+pre{
+  word-wrap: break-word;
+  }
+label{ color:gray; }
+code{ color:#08F; }
+.filename{ font-size:12px; font-weight: bold; }
+.fa{ font-size:24px }
+.dataTables_processing{ background-color: #555;}
+.dataTables_length, .dataTables_filter, .dataTables_info, .dataTables_paginate{ font-size: 0.7rem; }
+@media only screen and (max-width: 768px) {
+  .dataTables_filter input { width: 160px!important;}
+  .dataTables_length, .dataTables_filter{ display: inline }
+  .dataTables_filter{ float: right; position:absolute; right:20px; top:-38px; }
+}
+
+/* py form & datatable in dark mode */
+input.form-control, select.form-control, textarea.form-control, a.page-link {
+  background-color: #343a40!important; color:white!important;
+}
+li.active > a.page-link{
+  border-color: #dee2e6!important;
+  background-color: #FFF!important; color:#343a40!important;
+}
+input[type=checkbox]{ zoom: 1.7; position: relative; top: 2px; margin:0!important}
+div.checkbox > label{ font-size: 0.9rem; margin:0!important}
+
+</style>
+{{end}}
+
+{{block header}}
+  <h3 class="center">{{=ctr}}<small>/{{=fnc}}</small></h3>
+{{end}}
+
+<div class="row">
+  <div class="container no-maring no-padding">
+    <table id="ajaxTable" class="table table-striped" style="width:100%; font-size:0.8rem;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>name</th>
+                <th>status</th>
+                <th>createdate</th>
+            </tr>
+        </thead>
+    </table>
+  </div>
+</div>
+<script>
+$(document).ready(function(){
+  $('#ajaxTable').DataTable({
+       "pagingType": "full_numbers",
+       "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+       "pageLength": 10,
+       "search": true,
+       "paging": true,
+       "ordering": true,
+       "order": [[ 0, "desc" ]],
+       "info":     true,
+       "processing": true,
+       "serverSide": true,
+       "columns": [
+           { "data": "id" },
+           { "data": "name" },
+           { "data": "status" },
+           { "data": "createdate" },
+       ],
+       "ajax": {
+                 url:"{{=URL('getOnIdles')}}",
+                 type: "POST",
+                 complete: function(results){
+                   //console.log("ajax results:");
+                   //console.log(results.responseJSON);
+                 },
+                 error: function(xhr, error, thrown){
+                   // alert("An error occurred while attempting to retrieve data via ajax.\n"+thrown);
+                   console.log("An error occurred while attempting to retrieve data via ajax.\n"+thrown);;
+                 }
+               },
+   });
+});
+
+setInterval( function () {
+  $('#ajaxTable').DataTable().ajax.reload(null, false);
+  console.log('ajaxTable reloaded.');
+}, 30000 );
+</script>
+
+<br><br><br>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<!--[if (gt IE 9)|!(IE)]><!--> <html class="no-js" lang="{{=T.accepted_language or 'en'}}"> <!--<![endif]-->
+  <head>
+    <meta charset="utf-8">
+    <!-- www.phpied.com/conditional-comments-block-downloads/ -->
+    <!-- Always force latest IE rendering engine
+         (even in intranet) & Chrome Frame
+         Remove this if you use the .htaccess -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge{{=not request.is_local and ',chrome=1' or ''}}">
+    <!--  Mobile Viewport Fix
+          j.mp/mobileviewport & davidbcalhoun.com/2010/viewport-metatag
+          device-width: Occupy full width of the screen in its current orientation
+          initial-scale = 1.0 retains dimensions instead of zooming out if page height > device height
+          user-scalable = yes allows the user to zoom in -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{=request.controller}}/{{=request.function}}</title>
+    <!-- http://dev.w3.org/html5/markup/meta.name.html -->
+    <meta name="application-name" content="{{=request.application}}">
+    <!-- Speaking of Google, don't forget to set your site up:
+         http://google.com/webmasters -->
+    <meta name="google-site-verification" content="">
+    <!-- include stylesheets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="{{=URL('static','css/bootstrap.min.css')}}"/>
+    <link rel="stylesheet" href="{{=URL('static','css/web2py-bootstrap4.css')}}"/>
+    <!-- manifest -->
+    <link rel="manifest" href="{{=URL('static','js/manifest.json')}}">
+    <!-- ios support -->
+    <meta name="apple-mobile-web-app-status-bar" content="#FFE1C4">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+  	<meta name="apple-mobile-web-app-status-bar-style" content="Black">
+  	<link rel="icon" sizes="110x110" type="image/png" href="{{=URL('static','images/icon_skyyer.png')}}">
+  	<link rel="shortcut icon" sizes="110x110" type="image/png" href="{{=URL('static','images/icon_skyyer.png')}}">
+  	<link rel="apple-touch-icon-precomposed" sizes="114x114" type="image/png" href="{{=URL('static','images/icon_skyyer_114px.png')}}">
+  	<link rel="apple-touch-icon-precomposed" sizes="72x72" type="image/png" href="{{=URL('static','images/icon_skyyer_72px.png')}}">
+
+    <link rel="shortcut icon" href="{{=URL('static','images/favicon.ico')}}" type="image/x-icon">
+    <link rel="icon" href="{{=URL('static','images/favicon.ico')}}" type="image/x-icon">
+    <link rel="apple-touch-icon" size=96x96"" href="{{=URL('static','images/icon_skyyer_96px.png')}}">
+    <!-- All JavaScript at the bottom, except for Modernizr which enables
+         HTML5 elements & feature detects -->
+    <!-- <script src="{{=URL('static','js/modernizr-2.8.3.min.js')}}"></script> -->
+    <!-- Favicons -->
+    {{include 'web2py_ajax.html'}} <!-- this includes jquery.js, calendar.js/.css and web2py.js -->
+    <!-- ladda -->
+    <link href="{{=URL('static','ladda/ladda-themeless.min.css')}}" rel="stylesheet"/>
+    <script src="{{=URL('static','ladda/spin.min.js')}}"></script>
+    <script src="{{=URL('static','ladda/ladda.min.js')}}"></script>
+    <!-- production mode -->
+    <script src="{{=URL('static','vuejs/vue.min.js')}}"></script>
+    <script src="{{=URL('static','vuejs/vuetify.min.js')}}"></script>
+
+    <link href="{{=URL('static','vuejs/vuetify.min.css')}}" rel="stylesheet"/>
+    <script src="{{=URL('static','axios/axios.min.js')}}"></script>
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic|Material+Icons">
+
+    <!-- jqueryui.com/draggable/ -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    {{
+      app = request.application
+      ctr = request.controller
+      fnc = request.function
+      myThemes = "#00B400" if fnc=="newtodo" or fnc=="historyNewToDo" else "#3e94ff"
+
+    }}
+    <style>
+    /* body{ margin-bottom: 0!important; } */
+    .btn, .dropdown-item{ font-size: 0.8rem; }
+    /* my Themes... */
+    .myThemes-bg{ background-color:{{=myThemes}}; border-color:{{=myThemes}}; }
+    .myThemes-c{ color:{{=myThemes}}; }
+    .log{ color:black; }
+    body{ padding-top:50px; font-size: 0.8rem; }
+    nav.navbar{ border-bottom: 1px solid #eee; position:fixed; width:100%; top:0px; z-index:99; font-weight: bolder; }
+    /* py form & datatable in dark mode */
+    input.form-control, select.form-control, textarea.form-control, a.page-link {
+      color:dark;
+    }
+    /* datatables loading */
+    #ajaxTable_processing{ color: black; background-color: {{=myThemes}}; z-index:999; }
+
+    .processing{
+      z-index: 999;
+      width: 300px;
+      color: black;
+      background-color: {{=myThemes}};
+      border: 1px solid rgba(0,0,0,0.25);
+      border-radius: 0.25rem;
+      text-align:center; font-size: 1em;
+      position: absolute;
+      top: 40%; left: 50%;
+      padding:1.2em 0;
+      margin-left: -150px;
+      margin-top: 0px;
+    }
+    .loading > i.fa{ font-size: 1.1em; margin:0 4px; }
+    .text{ word-wrap: break-word; word-break: break-all; white-space: pre-wrap; }
+    .px1{ padding-left:1px; padding-right:1px; }
+    .px3{ padding-left:3px; padding-right:3px; }
+    .px6{ padding-left:6px; padding-right:6px; }
+    .px10{ padding-left:10px; padding-right:10px; }
+    .px15{ padding-left:15px; padding-right:15px; }
+    .radius0{ border-radius:0px; }
+    .radius1{ border-radius:1px; }
+    .radius2{ border-radius:2px; }
+    .radius3{ border-radius:3px; }
+    .radius4{ border-radius:4px; }
+    .radius5{ border-radius:5px; }
+    .radius6{ border-radius:6px; }
+    .radius7{ border-radius:7px; }
+    .radius8{ border-radius:8px; }
+    .radius9{ border-radius:9px; }
+    .radius10{ border-radius:10px; }
+    .radius15{ border-radius:15px; }
+    .bg-gray1{ background-color:rgba(0,0,0,0.1); }
+    .bg-gray2{ background-color:rgba(0,0,0,0.2); }
+    .bg-gray3{ background-color:rgba(0,0,0,0.3); }
+    .bg-gray4{ background-color:rgba(0,0,0,0.4); }
+    .bg-gray5{ background-color:rgba(0,0,0,0.5); }
+    .bg-gray6{ background-color:rgba(0,0,0,0.6); }
+    .bg-gray7{ background-color:rgba(0,0,0,0.7); }
+    .bg-gray8{ background-color:rgba(0,0,0,0.8); }
+    .bg-gray9{ background-color:rgba(0,0,0,0.9); }
+    .fontSize-20{ font-size: 2rem; }
+    .fontSize-19{ font-size: 1.9rem; }
+    .fontSize-18{ font-size: 1.8rem; }
+    .fontSize-17{ font-size: 1.7rem; }
+    .fontSize-16{ font-size: 1.6rem; }
+    .fontSize-15{ font-size: 1.5rem; }
+    .fontSize-14{ font-size: 1.4rem; }
+    .fontSize-13{ font-size: 1.3rem; }
+    .fontSize-12{ font-size: 1.2rem; }
+    .fontSize-11{ font-size: 1.1rem; }
+    .fontSize-10{ font-size: 1rem; }
+    .fontSize-09{ font-size: 0.9rem; }
+    .fontSize-08{ font-size: 0.8rem; }
+    .fontSize-07{ font-size: 0.7rem; }
+    .fontSize-06{ font-size: 0.6rem; }
+    .fontSize-05{ font-size: 0.5rem; }
+    .block{ display: block; }
+    .inline{ display: inline; }
+    .inline-block{ display: inline-block; }
+
+    #btn-scrollToTop {
+      opacity: 0.9;
+      display: none; position: fixed;
+      bottom: 10px; right: 10px;
+      z-index: 1031; font-size: 18px;
+      border: none; outline: none;
+      background-color: black; color: white;
+      opacity: 0.4;
+      cursor: pointer; padding: 10px 15px; border-radius: 6px;
+    }
+
+    /*  Vue style  */
+    .fade-enter-active, .fade-leave-active {
+      transition: opacity .25s;
+    }
+    .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+      opacity: 0;
+    }
+    </style>
+    {{block head}}{{end}}
+  </head>
+  <body>
+    <div class="w2p_flash alert alert-dismissable">{{#=response.flash or ''}}</div>
+    {{ navbar_themes = "navbar-dark bg-dark" }}
+    <nav class="navbar {{=navbar_themes}} navbar-expand-md bg-faded justify-content-center">
+       <a href="{{=URL(app,'default','index')}}" class="navbar-brand d-flex mr-auto">mySkyyer</a>
+       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+         <span class="navbar-toggler-icon"></span>
+       </button>
+       <div class="navbar-collapse collapse w-100 ml-4" id="navbarNavDropdown">
+
+         <ul class="navbar-nav w-100">
+          {{for _item in response.menu or []:}}
+          {{if len(_item)<4 or not _item[3]:}}
+          <li class="nav-item {{if _item[1]:}}active{{pass}}">
+            <a class="nav-link" href="{{=_item[2]}}">{{=_item[0]}}</a>
+          </li>
+          {{else:}}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="{{=_item[2]}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{=_item[0]}}</a>
+            <div class="dropdown-menu">
+              {{for _subitem in _item[3]:}}
+              <a class="dropdown-item" href="{{=_subitem[2]}}">{{=_subitem[0]}}</a>
+              {{pass}}
+            </div>
+          </li>
+          {{pass}}
+          {{pass}}
+        </ul>
+
+        {{if 'auth' in globals():}}
+        <ul class="nav navbar-nav ml-auto w-25 justify-content-end">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {{if auth.user:}}{{=auth.user.first_name.capitalize() +" "+ auth.user.last_name.capitalize()}}{{else:}}LOGIN{{pass}}
+            </a>
+            <div class="dropdown-menu dropdown-menu-right">
+              {{if auth.user:}}
+              <a class="dropdown-item" href="{{=URL('default','user/profile')}}">{{=T('Profile')}}</a>
+              {{if 'change_password' not in auth.settings.actions_disabled:}}
+              <a class="dropdown-item" href="{{=URL('default','user/change_password')}}">{{=T('Change Password')}}</a>
+              {{pass}}
+              <a class="dropdown-item" href="{{=URL('default','user/logout')}}">{{=T('Logout')}}</a>
+              {{else:}}
+              <a class="dropdown-item" href="{{=URL('default','user/login')}}">{{=T('Login')}}</a>
+              {{if 'register' not in auth.settings.actions_disabled:}}
+              <a class="dropdown-item" href="{{=URL('default','user/register')}}">{{=T('Sign up')}}</a>
+              {{pass}}
+              {{if 'retrieve_password' not in auth.settings.actions_disabled:}}
+              <!-- <a class="dropdown-item" href="{{=URL('default','user/retrieve_password')}}">{{=T('Lost Password')}}</a> -->
+              {{pass}}
+              {{pass}}
+            </div>
+          </li>
+        </ul>
+        {{pass}}
+      </div>
+    </nav>
+    {{block header}}{{end}}
+    <!-- Main ========================================= -->
+    <div class="container-fluid main-container">
+      {{include}}
+      {{=response.toolbar() if response.show_toolbar else ''}}
+    </div>
+    {{block footer}}{{end}}
+    <!-- The javascript =============================== -->
+    <script src="{{=URL('static','js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{=URL('static','js/web2py-bootstrap4.js')}}"></script>
+    {{block page_js}}{{end page_js}}
+    {{if response.google_analytics_id:}}
+    <!-- Analytics ==================================== -->
+    <script src="{{=URL('static','js/analytics.min.js')}}"></script>
+    <script type="text/javascript">
+      analytics.initialize({
+      'Google Analytics':{trackingId:'{{=response.google_analytics_id}}'}
+      });
+    </script>
+    {{pass}}
+    <script>
+    $( function() {
+      $( "div.modal" ).draggable();
+    } );
+    window.onscroll = function() {scrollFunction()};
+    function scrollFunction() {
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            document.getElementById("btn-scrollToTop").style.display = "block";
+        } else {
+            document.getElementById("btn-scrollToTop").style.display = "none";
+        }
+    }
+    function topFunction() {
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+    }
+    </script>
+    <button onclick="topFunction()" id="btn-scrollToTop" title="Go to top"><i class="fa fa-arrow-up"></i></button>
+  </body>
+</html>

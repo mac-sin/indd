@@ -1,0 +1,631 @@
+{{extend 'mylayout.html'}}
+{{block head}}
+{{include 'cdn_datatables.html'}}
+
+<style type="text/css">
+  nav.navbar{ display:none; }
+  .no-padding{ padding-left:0px; padding-right:0px; }
+  .no-margin{ margin-left:0px; margin-right:0px; }
+  .text{ word-wrap: break-word; white-space: pre-line; }
+  .bg-gray{ background-color: #ccc; }
+  .border-black{ border: 1px solid black; }
+  .error{ color:red; }
+  pre{
+    word-wrap: break-word; white-space: pre-line;
+    }
+  code{ color:#08F; }
+  .filename{ font-size:12px; font-weight: bold; }
+  .fa{ font-size:2rem; }
+  .dataTables_processing{ background-color: #555;}
+  .dataTables_length, .dataTables_filter, .dataTables_info, .dataTables_paginate{ font-size: 0.7rem; }
+  @media only screen and (max-width: 768px) {
+    .dataTables_filter input { width: 160px!important;}
+    .dataTables_length, .dataTables_filter{ display: inline }
+    .dataTables_filter{ float: right; position:absolute; right:20px; top:-38px; }
+  }
+  li.active > a.page-link{
+    border-color: #dee2e6!important;
+    background-color: #FFF!important; color:#343a40!important;
+  }
+  input[type=checkbox]{ zoom: 1.7; position: relative; top: 2px; margin:0!important}
+  div.checkbox > label{ font-size: 0.9rem; margin:0!important}
+  #formVue-processing{
+    display: block;
+    z-index: 999;
+    width: 300px; background-color: #222;
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: 0.25rem;
+    text-align:center; font-size: 1em;
+    position: absolute;
+    top: 40%; left: 50%;
+    padding:1.2em 0;
+    margin-left: -150px;
+    margin-top: -26px;
+  }
+  #formVue-processing > i.fa{ font-size: 1.1em; margin:0 4px; }
+</style>
+{{end}}
+
+{{block header}}
+  <div id="app-alertVue" class="center">
+    <h3 class="center">{{=request.controller}}</h3>
+    <div class="btn-group">
+      <button type="button" class="btn btn-block btn-primary btn-form" data-toggle="modal" data-target="#app-folderVue" data-backdrop="true" onclick="javascript:formVue.init()">New Export</button>
+      <div class="dropdown btn-group" v-if="vAlert.isadmin">
+        <button type="button" class="btn btn-block btn-primary dropdown-toggle" data-toggle="dropdown">menu</button>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="javascript:void(0)" v-on:click="call">launchApp</a>
+          <a class="dropdown-item" href="javascript:void(0)" v-on:click="call">openFile</a>
+          <a class="dropdown-item" href="javascript:void(0)" v-on:click="call">alertCount</a>
+          <a class="dropdown-item" href="javascript:void(0)" v-on:click="call">checkAppStatus</a>
+          <a class="dropdown-item" href="javascript:void(0)" v-on:click="call">backgroundTasks</a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="javascript:void(0)" v-on:click="call">addIdleTask</a>
+          <a class="dropdown-item" href="javascript:void(0)" v-on:click="call">removeIdleTasks</a>
+        </div>
+      </div>
+    </div>
+
+    <br>
+    <!-- div message -->
+    <div class="message" style="width:100%; position:absolute; top:2px; z-index:1060;">
+      <transition name="fade">
+        <div class="container alert" v-show="(vAlert.success==true || vAlert.warning==true)"
+              v-bind:class="{ 'alert-success':vAlert.success, 'alert-warning':vAlert.warning }">
+            <span><% vAlert.message %><span>
+        </div>
+      </transition>
+    </div>
+
+  </div>
+  <script>
+  var alert = { success:false, warning:false, message:"", isadmin:false }
+  {{if auth.user and auth.user.email =="kwongsin@skyyer.com":}}
+      alert.isadmin = true;
+  {{pass}}
+  var alertVue = new Vue({
+      el: '#app-alertVue',
+      delimiters: ["<%","%>"],
+      data: {vAlert:alert},
+      created: function() {
+        this.call()
+      },
+      updated: function(){
+        var thisVue = this
+        console.log( `alertVue updated: "${this.vAlert.message}"`);
+        window.setTimeout(function(){
+          thisVue.vAlert.success = false;
+          thisVue.vAlert.warning = false;
+          thisVue.vAlert.message = ""
+        },3000);
+      },
+      methods: {
+        call: function( event ){
+          if(event){
+              var funcName = event.target.innerHTML;
+              var thisVue = this
+              console.log( funcName );
+              // Make a request for a user with a given ID
+              axios.get('/mySkyyer/inddjpg/'+ funcName +'?id=123456')
+                .then(function (response) { // handle success
+                  console.log('axios success! response.data.success: '+ response.data.success +', id: '+ response.data.id );
+                  thisVue.vAlert.success = response.data.success
+                  thisVue.vAlert.warning = response.data.warning
+                  if( funcName=="alertCount" ){
+                    console.log(response.data);
+                    thisVue.vAlert.message = response.data.message
+                  }else if( funcName=="checkAppStatus" ){
+                    thisVue.vAlert.message = response.data.message
+                  }else{
+                    thisVue.vAlert.message = response.data.message
+                  }
+                })
+                .catch(function (error) { // handle error
+                  console.log(error);
+                })
+                .then(function () { // always executed
+                });
+          }else{
+              console.log('alertVue started');
+          }
+        }
+        },
+    })
+  </script>
+{{end}}
+
+<div class="row">
+  <div class="container no-maring no-padding">
+    <table id="ajaxTable" class="table table-striped" style="width:100%; font-size:1rem;">
+        <thead>
+            <tr>
+                <th><center>ID</center></th>
+                <th>filename</th>
+                <th><center>status</center></th>
+                <th>exportRangeOrAllPages</th>
+                <th>exportingSpread</th>
+                <th>jpegQuality</th>
+                <th>exportResolution</th>
+                <th>pageString</th>
+                <th>errormessage</th>
+                <th>filepath</th>
+                <th>mdate</th>
+                <th>exectime</th>
+                <th>inddname</th>
+            </tr>
+        </thead>
+    </table>
+  </div>
+</div>
+<script>
+$(document).ready(function(){
+  $('[data-toggle="popover"]').popover();
+
+  $('#app-folderVue').on('hidden.bs.modal', function (e) {
+    $("#formVue-processing").show(100);
+    formVue.reset()
+  })
+
+  var exportTable = $('#ajaxTable').DataTable({
+       "pagingType": "full_numbers",
+       "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+       "pageLength": 5,
+       "search": true,
+       "paging": true,
+       "ordering": false,
+       "order": [[ 0, "asc" ]],
+       "info":     true,
+       "processing": true,
+       "serverSide": true,
+       "columns": [
+           { "data": "id" },
+           { "data": "filename" },
+           { "data": "status" },
+           { "data": "exportRangeOrAllPages" },
+           { "data": "exportingSpread" },
+           { "data": "jpegQuality" },
+           { "data": "exportResolution" },
+           { "data": "pageString" },
+           { "data": "errormessage" },
+           { "data": "filepath" },
+           { "data": "mdate" },
+           { "data": "exectime" },
+           { "data": "inddname" },
+       ],
+       "columnDefs": [
+           //keyID
+           { "targets": [ 0 ], "visible":true, "searchable": false, "orderable":false,
+             "render": function( data, type, row ){
+               return '<center><button class="btn btn-sm text-light btn-dark btn-form" data-toggle="modal" data-target="#app-folderVue" onclick="edit('+data+')" style="font-size:1rem;">'+ data +'</button></center>'
+             }
+           },
+           //filename
+           { "targets": [ 1 ], "width":"auto", "searchable":true, "orderable":false,
+             "render": function( data, type, row ){
+                 if(row["status"]=="Error"){
+                   var textClass = "text-warning"
+                   var badgeClass = "badge-warning"
+                 }else if(row["status"]=="Finish"){
+                   var textClass = "text-secondary"
+                   var badgeClass = "text-secondary"
+                 }else if(row["status"]=="Processing"){
+                   var textClass = "text-light"
+                   var badgeClass = "badge-primary"
+                 }else if(row["status"]=="Idle"){
+                   var textClass = ""
+                   var badgeClass = "badge-light"
+                 }
+                 // var exportRangeOrAllPages = '<span class="badge badge-pill '+badgeClass+'">'+ row["exportRangeOrAllPages"] +'</span>';
+                 var jpegQuality = '<span class="badge badge-pill '+badgeClass+'">'+ row["jpegQuality"]+':'+ row["exportResolution"] +'ppi</span>';
+                 var isSingleSpread = (row["exportingSpread"])? 'Spread' : 'Single' ;
+                 var pageString = '<span class="badge badge-pill '+badgeClass+'">'+ row["pageString"]+':'+ isSingleSpread +'</span>';
+                 var errormessage = '';
+                 if( row["errormessage"] ){
+                    var errormessage = '<span class="badge badge-pill '+badgeClass+'">'+ row["errormessage"] +'</span>';
+                 }
+                 var logs = ""
+                 if(row["status"]=="Processing"){
+                   var mdate = (row['mdate'])? '<span class="badge badge-pill '+badgeClass+'">'+row['inddname']+'@'+row['mdate']+'</span>' : "";
+                   logs = mdate
+                 }else if(row["status"]=="Finish"){
+                   var execTime = (row["exectime"])? '<span class="badge badge-pill '+badgeClass+'">'+row["exectime"]+'s</span>' : "";
+                   var mdate = (row['mdate'])? '<span class="badge badge-pill '+badgeClass+'">'+row['inddname']+'@'+row['mdate']+'</span>' : "";
+                   logs = execTime +' '+ mdate
+                 }else if(row["status"]=="Error"){
+                   var mdate = (row['mdate'])? '<span class="badge badge-pill '+badgeClass+'">'+row['inddname']+'@'+row['mdate']+'</span>' : "";
+                   var errormessage = (row['errormessage'])? '<span class="badge badge-pill '+badgeClass+'">'+row['errormessage']+'</span>' : "";
+                   logs = mdate +' '+ errormessage
+                 }
+                 return '<div class="filename '+textClass+'" title="">'+ data +'</div> ' + jpegQuality+' '+pageString+' '+logs;
+              }
+           },
+           // status
+           { "targets": [ 2 ], "visible": true, "searchable":false, "orderable":false,
+             "render": function( data, type, row ){
+                 if(data=="Error"){
+                   var status = '<center><i class="fa fa-warning text-warning"></i></center>'
+                 }else if(data=="Finish"){
+                   var status = '<center><i class="fa fa-check text-secondary"></i></center>'
+                 }else if(data=="Processing"){
+                   var status = '<center><i class="fa fa-spinner fa-spin text-primary"></i></center>'
+                 }else if(data="Idle"){
+                   var status = '<center><i class=""></i></center>'
+                 }
+                 return status
+             }
+           },
+           { "targets": [ 3 ], "visible": false, "searchable":false, "orderable":false },// exportRangeOrAllPages
+           { "targets": [ 4 ], "visible": false, "searchable":false, "orderable":false },// exportingSpread
+           { "targets": [ 5 ], "visible": false, "searchable":false, "orderable":false },// jpegQuality
+           { "targets": [ 6 ], "visible": false, "searchable":false, "orderable":false },// exportResolution
+           { "targets": [ 7 ], "visible": false, "searchable":false, "orderable":false },// pageString
+           { "targets": [ 8 ], "visible": false, "searchable":false, "orderable":false },// errormessage
+           { "targets": [ 9 ], "visible": false, "searchable":false, "orderable":false },// filepath
+           { "targets": [ 10 ], "visible": false, "searchable":false, "orderable":false },// mdate
+           { "targets": [ 11 ], "visible": false, "searchable":false, "orderable":false },// exectime
+           { "targets": [ 12 ], "visible": false, "searchable":false, "orderable":false },// inddname
+       ],
+       "ajax": {
+           url:"{{=URL('getExportJpgList')}}",
+           type: "POST",
+           complete: function(results){
+             // console.log("getExportList results:");
+             // console.log(results.responseJSON);
+           },
+           error: function(xhr, error, thrown){
+             // alert("An error occurred while attempting to retrieve data via ajax.\n"+thrown);
+             console.log("An error occurred while attempting to retrieve data via ajax.\n"+thrown);;
+           }
+       },
+     });
+
+});
+
+setInterval( function () {
+  $('#ajaxTable').DataTable().ajax.reload(null, false);
+}, 30000 );
+
+</script>
+
+<br><br><br>
+
+<!--======== The Modal Form (formVue) =========-->
+<div class="modal fade" id="app-folderVue">
+  <div class="modal-dialog" style="max-width:500px">
+
+    <div id="formVue-processing" class=""><i class="fa fa-spinner fa-spin"></i> Processing...</div>
+
+    <div class="modal-content text-light bg-dark">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h6 class="modal-title" v-if="selectinddfilename"><% selectinddfilename %> <i class="fa fa-check c-blue" v-if="selectinddfilename"></i></h6>
+        <h6 class="modal-title" v-else="currentname"><% currentname %></h6>
+        <button type="button" class="close" data-dismiss="modal"><i class="fa fa-close text-light" style="font-size:24px"></i></button>
+      </div>
+      <!-- Modal body -->
+      <div class="modal-body">
+
+        <button type="button" class="btn btn-sm btn-outline-secondary text-light" v-on:click="get_back"><i class="fa fa-arrow-left" style="font-size:16px"></i> Black</button>
+
+        <div class="list-group" id="list-group" style="font-size:0.8rem; margin-bottom:1rem;">
+          <a href="#" class="list-group-item list-group-item-action text-light bg-dark" style="padding:0.3em">
+            <i class="fa fa-folder-open-o"></i> <span class="font-weight-bold font-italic"><% currentname %></span>
+          </a>
+
+          <a href="#" class="list-group-item list-group-item-action text-light bg-dark" style="padding:0.3em 0.3em 0.3em 3em"
+          v-for="(indd, index) in inddfiles" :title="indd.path" v-on:click="select_indd_file">
+            <i class="fa fa-file" style="font-size:1.5em"></i> <% indd.name %> <i class="fa fa-check c-blue float-right" v-if="indd.path==selectinddfile"></i>
+          </a>
+
+          <a href="#" class="list-group-item list-group-item-action text-light bg-dark" style="padding:0.3em 0.3em 0.3em 3em"
+          v-for="(child, index) in child" v-on:click="get_folders" :title="child.path">
+            <i class="fa fa-folder-o" style="font-size:1.5em"></i> <% child.name %>
+          </a>
+        </div>
+
+        <transition name="fade">
+          <div v-show="(inddfileslength > 0 && selectinddfile)">
+            <!--  -->
+            <div class="">
+              <label for="exportRangeOrAllPages">選取範圍:</label>
+              <div class="form-check-inline">
+                <label class="form-check-label">
+                  <input type="radio" class="form-check-input" name="exportRangeOrAllPages" value="EXPORT_RANGE" v-model="exportRangeOrAllPages"> 範圍
+                </label>
+              </div>
+              <div class="form-check-inline">
+                <label class="form-check-label">
+                  <input type="radio" class="form-check-input" name="exportRangeOrAllPages" value="EXPORT_ALL" v-model="exportRangeOrAllPages"> 全部
+                </label>
+              </div>
+            </div>
+
+            <div class="row" v-show="exportRangeOrAllPages=='EXPORT_RANGE'">
+              <!--  -->
+                <div class="form-group col-6">
+                  <label for="rangestart">start: </label>
+                  <span class="text-danger"> <% rangestartmessage %> </span>
+                  <input id="rangestart" class="form-control form-control-sm inline" style="width:100%"
+                  onkeyup="this.value=this.value.replace(/[^0-9]/g,'');"
+                  name="rangestart" type="number" min="1" step="1" v-model="rangestart">
+                </div>
+                <div class="form-group col-6">
+                  <label for="rangeend">end: </label>
+                  <span class="text-danger"> <% rangeendmessage %> </span>
+                  <input id="rangeend" class="form-control form-control-sm inline" style="width:100%"
+                  onkeyup="this.value=this.value.replace(/[^0-9]/g,'');"
+                  name="rangeend" type="number" min="1" step="1" v-model="rangeend">
+                </div>
+            </div>
+
+            <div class="form-group" >
+              <label for="exportingSpread">單頁/跨頁:</label>
+              <div class="form-check-inline">
+                <label class="form-check-label">
+                  <input type="radio" class="form-check-input" name="exportingSpread" value="False" v-model="exportingSpread"> 單頁
+                </label>
+              </div>
+              <div class="form-check-inline">
+                <label class="form-check-label">
+                  <input type="radio" class="form-check-input" name="exportingSpread" value="True" v-model="exportingSpread"> 跨頁
+                </label>
+              </div>
+            </div>
+          </div>
+        </transition>
+
+        <transition name="fade">
+          <div class="row">
+            <div class="form-group col-6" v-show="selectinddfile && pageString">
+              <!--  -->
+              <label for="jpegQuality">影像品質:</label>
+              <select class="form-control form-control-sm inline" style="width:100%" name="jpegQuality" v-model="jpegQuality">
+                <option v-for="(child, index) in jpegQualityDefault" :value="child"><% child %></option>
+              <select>
+            </div>
+            <div class="form-group col-6" v-show="jpegQuality">
+              <!--  -->
+              <label for="exportResolution">解析度(ppi):</label>
+              <select class="form-control form-control-sm inline" style="width:100%" name="exportResolution" v-model="exportResolution">
+                <option v-for="(child, index) in exportResolutionDefault" :value="child"><% child %></option>
+              <select>
+            </div>
+          </div>
+        </transition>
+
+      </div>
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary btn-block" v-on:click="submitExport"
+            v-if="(inddfileslength > 0 && selectinddfile && pageString && jpegQuality && exportResolution)"
+            data-toggle="modal" data-target="#myModal">
+            <span v-if="id">Update(#<% id %>)</span>
+            <span v-else>New Export</span>
+          </button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+var folderPathRoot = '/Volumes/Public1/inHouse/kkk/auto_Gen_PDF_test';
+
+var FOLDERs = { currentname: "init name",
+                currentpath:" init/path",
+                childlength: 0,
+                child:[
+                  {name:'..',path:".."},
+                  {name:'lll',path:"this/Links"},
+                  {name:'ppp',path:"this/Pdfs"}
+                ],
+                inddfileslength: 0,
+                inddfiles: [],
+                selectinddfile: "",
+                jpegQualityDefault: ['LOW','MEDIUM','HIGH','MAXIMUM'],
+                jpegQuality: '',
+                exportRangeOrAllPages: "EXPORT_RANGE",
+                exportingSpread: "False",
+                rangestart: "",
+                rangeend: "",
+                rangestartmessage: "",
+                rangeendmessage: "",
+                exportResolutionDefault: [72,150,300],
+                exportResolution: null,
+                id:null
+              }
+
+var formVue = new Vue({
+    el: '#app-folderVue',
+    delimiters: ["<%","%>"],
+    data: FOLDERs,
+    beforeCreate: function(){ },
+    created: function() {
+      console.log('formVue started');
+    },
+    mounted: function(){
+    },
+    updated: function(){
+      // console.log( "selectinddfile: '"+ this.selectinddfile +"'");
+      // console.log( `updated: exportRangeOrAllPages:${this.exportRangeOrAllPages}, exportingSpread:${this.exportingSpread}, pageString:${this.pageString}, jpegQuality:${this.jpegQuality}, exportResolution:${this.exportResolution}` );
+    },
+    computed: {
+      pageString: function(){
+        if(this.exportRangeOrAllPages=="EXPORT_ALL"){
+          this.rangestart = ""
+          this.rangeend = ""
+          return "All"
+        }else{
+          if( this.rangestart.length>3 ){
+              this.rangestartmessage = "max:999"
+              return false
+          }else{
+              this.rangestartmessage = ""
+          }
+          if( this.rangeend.length>3 ){
+              this.rangeendmessage = "max:999"
+              return false
+          }else{
+              this.rangeendmessage = ""
+          }
+
+          if( isNaN(parseInt(this.rangestart)) || isNaN(parseInt(this.rangeend)) ){
+            return false
+          }
+          if( parseInt(this.rangestart) > parseInt(this.rangeend) ){
+            this.rangestartmessage = "Can Not > end page"
+            return false
+          }
+          if( parseInt(this.rangestart)==0 || parseInt(this.rangeend)==0 ){
+            if(parseInt(this.rangestart)==0 ){
+              this.rangestartmessage = "'0':invalid"
+            }
+            return false
+          }
+          return this.rangestart +"-"+ this.rangeend
+        }
+
+      },
+      selectinddfilename: function(){
+        return this.selectinddfile.split("/").pop()
+      }
+    },
+    // watch: {
+    //   rangestart: function(){
+    //     this.rangestring =   this.rangestart+"-"+this.rangeend
+    //     console.log( "watch: this.rangestring= "+ this.rangestring );
+    //   },
+    //   rangeend: function(){
+    //     this.rangestring =   this.rangestart+"-"+this.rangeend
+    //     console.log( "watch: this.rangestring= "+ this.rangestring );
+    //   }
+    // },
+    methods: {
+      init: function(){
+        $("#formVue-processing").show(100);
+        var data = {id:null}
+            data.folderpath = (localStorage.currentpath)? localStorage.currentpath : folderPathRoot ;
+        this.get_folders(data);
+      },
+
+      select_indd_file :function(event){
+        this.selectinddfile = event.target.title
+      },
+
+      get_back: function(){
+        $("#formVue-processing").show(100);
+        var path = this.currentpath.split("/")
+            path.pop()
+            this.currentpath = path.join("/")
+        this.get_folders({id:null, folderpath:this.currentpath})
+        this.selectinddfile = ""
+        this.rangestart = ""
+        this.rangeend = ""
+        this.pageString = ""
+      },
+
+      get_folders: function( data ){
+          $("#formVue-processing").show(100);
+          if(data.type=="click"){
+            // console.log(`data.type=="click"`);
+            this.currentpath = data.target.title
+            if(this.currentpath==".."){
+              var path = this.currentpath.split("/")
+                  path.pop()
+                  this.currentpath = path.join("/")
+            }
+          }else{
+            this.currentpath = data.folderpath
+          }
+          if(this.currentpath==""){ return false; }
+          //set web store...
+          localStorage.currentpath = this.currentpath
+          axios({
+            method: 'POST', url: '/myskyyer/inddjpg/getFolders', timeout: 10000,
+            data: { selectfolder:this.currentpath },
+            validateStatus: (status) => {
+              return true; // I'm always returning true, you may want to do it depending on the status received
+            },
+          }).then(function(response){
+                if(response.status==500){
+                  alertVue.vAlert.success = false;
+                  alertVue.vAlert.warning = true;
+                  alertVue.vAlert.message = response.statusText
+                  return true
+                }
+                for( k in response.data ){
+                    if( Array.isArray(response.data[k]) ){
+                        FOLDERs[k] = []
+                        for(var i=0; i<response.data[k].length; i++){
+                          FOLDERs[k].push( response.data[k][i] )
+                        }
+                    }else{
+                        FOLDERs[k] = response.data[k]
+                    }
+                }
+                FOLDERs.selectinddfile = (FOLDERs.inddfileslength==1)? FOLDERs.inddfiles[0].path : "";
+                // console.log(FOLDERs);
+          }).then(function(){
+              if(data.id){
+                formVue.set_form(data)
+              }
+              $("#formVue-processing").hide(250)
+          }).catch(function(error){
+              console.log("Error: "+ error);
+          })
+      },
+
+      reset: function(){
+        this.inddfileslength = 0
+        this.selectinddfile = ""
+        this.exportRangeOrAllPages = ""
+        this.exportingSpread = ""
+        this.jpegQuality = ""
+        this.exportResolution = null
+        this.rangestart = ""
+        this.rangeend = ""
+        this.id = null
+      },
+
+      set_form: function( data ){
+        for( var i=0; i<this.inddfiles.length; i++ ){
+          if( this.inddfiles[i].name==data.filename ){
+            this.selectinddfile = data.filepath;
+            break;
+          }
+        }
+        this.exportRangeOrAllPages = data.exportRangeOrAllPages
+        this.exportingSpread = (data.exportingSpread)? "True":"False";
+        var pageStrings = (data.pageString!="All")? String(data.pageString).split("-") : String(data.pageString) ;
+        this.rangestart = (data.pageString!="All")? pageStrings[0] : "";
+        this.rangeend = (this.pageString!="All")? pageStrings[1] : "";
+        this.jpegQuality = data.jpegQuality
+        this.exportResolution = data.exportResolution
+        this.id = data.id
+      },
+
+      submitExport: function(event){
+          if(event.type=="click"){
+              //console.log(event);
+              var data = { id:this.id, filepath:this.selectinddfile, exportRangeOrAllPages:this.exportRangeOrAllPages, pageString:this.pageString, exportingSpread:this.exportingSpread, jpegQuality:this.jpegQuality, exportResolution:this.exportResolution  }
+              axios.post('/myskyyer/inddjpg/newExportRequest', data )
+              .then(function (result) {
+                $("#app-folderVue").modal("hide");
+                $('#ajaxTable').DataTable().ajax.reload(null, false);
+              })
+              .catch(function (error) {
+                console.log("Error: "+error);
+              });
+          }
+      },
+    }
+})
+
+function edit(id){
+  $("#formVue-processing").show(100);
+  $.get("{{=URL('getExportJpgById')}}/"+id, function(data, status){
+    formVue.get_folders(data[id])
+  });
+}
+</script>

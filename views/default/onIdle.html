@@ -1,0 +1,67 @@
+{{extend 'mylayout.html'}}
+{{block head}}
+{{include 'cdn_datatables.html'}}
+
+<style>
+</style>
+{{end}}
+
+{{block header}}
+  <h3 class="center">{{=fnc}}</h3>
+{{end}}
+
+<div class="row">
+  <div class="container no-maring no-padding">
+    <table id="ajaxTable" class="table table-striped" style="width:100%; font-size:0.8rem;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>name</th>
+                <th>status</th>
+                <th>createdate</th>
+            </tr>
+        </thead>
+    </table>
+  </div>
+</div>
+<script>
+$(document).ready(function(){
+  $('#ajaxTable').DataTable({
+    "pagingType": "full_numbers",
+    "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+    "pageLength": 10,
+    "search": true,
+    "paging": true,
+    "ordering": true,
+    "order": [[ 0, "desc" ]],
+    "info":     true,
+    "processing": true,
+    "serverSide": true,
+    "columns": [
+      { "data": "id" },
+      { "data": "name" },
+      { "data": "status" },
+      { "data": "createdate" },
+    ],
+    "ajax": {
+      url:"{{=URL('getOnIdles')}}",
+      type: "POST",
+      complete: function(results){
+        //console.log("ajax results:");
+        //console.log(results.responseJSON);
+      },
+      error: function(xhr, error, thrown){
+        // alert("An error occurred while attempting to retrieve data via ajax.\n"+thrown);
+        console.log("An error occurred while attempting to retrieve data via ajax.\n"+thrown);;
+      }
+    },
+  });
+});
+
+setInterval( function () {
+  $('#ajaxTable').DataTable().ajax.reload(null, false);
+  console.log('ajaxTable reloaded.');
+}, 30000 );
+</script>
+
+<br><br><br>

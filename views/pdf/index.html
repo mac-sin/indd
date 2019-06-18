@@ -3,43 +3,6 @@
 {{include 'cdn_datatables.html'}}
 
 <style type="text/css">
-  nav.navbar{ display:none; }
-  .no-padding{ padding-left:0px; padding-right:0px; }
-  .no-margin{ margin-left:0px; margin-right:0px; }
-  .text{ word-wrap: break-word; white-space: pre-line; }
-  .bg-gray{ background-color: #ccc; }
-  .border-black{ border: 1px solid black; }
-  .error{ color:red; }
-  pre{
-    word-wrap: break-word; white-space: pre-line;
-    }
-  code{ color:#08F; }
-  .filename{ font-size:12px; font-weight: bold; }
-  .fa{ font-size:2rem; }
-  .dataTables_processing{ background-color: #555;}
-  .dataTables_length, .dataTables_filter, .dataTables_info, .dataTables_paginate{ font-size: 0.7rem; }
-  @media only screen and (max-width: 768px) {
-    .dataTables_filter input { width: 160px!important;}
-    .dataTables_length, .dataTables_filter{ display: inline }
-    .dataTables_filter{ float: right; position:absolute; right:20px; top:-38px; }
-  }
-  li.active > a.page-link{
-    border-color: #dee2e6!important;
-    background-color: #FFF!important; color:#343a40!important;
-  }
-  input[type=checkbox]{ zoom: 1.7; position: relative; top: 2px; margin:0!important}
-  div.checkbox > label{ font-size: 0.9rem; margin:0!important}
-  /* py form & datatable in dark mode */
-  body{ background-color: #343a40; color: white }
-  input.form-control, select.form-control, textarea.form-control, a.page-link {
-    background-color: #343a40!important; color:white!important;
-  }
-  li.active > a.page-link{
-    border-color: #dee2e6!important;
-    background-color: #FFF!important; color:#343a40!important;
-  }
-  input[type=checkbox]{ zoom: 1.7; position: relative; top: 2px; margin:0!important}
-  div.checkbox > label{ font-size: 0.9rem; margin:0!important}
 </style>
 {{end}}
 
@@ -48,7 +11,7 @@
     <h3 class="center">{{=request.controller}}</h3>
     <div class="btn-group">
       <a class="btn btn-block btn-primary" href="javascript:void(0)" style="height:33px" data-toggle="modal" data-target="#app-folderVue" data-backdrop="static" onclick="javascript:formVue.init()">New Export</a>
-      <a class="btn btn-block btn-secondary" href="{{=URL('onIdle')}}" target="_blank" style="height:33px; margin-top:0;">onIdle</a>
+      <a class="btn btn-block btn-secondary" href="{{=URL('default','onIdle')}}" target="_blank" style="height:33px; margin-top:0;">onIdle</a>
       <div class="dropdown btn-group" v-if="vAlert.isadmin">
         <button type="button" class="btn btn-block btn-primary dropdown-toggle" data-toggle="dropdown">menu</button>
         <div class="dropdown-menu">
@@ -70,7 +33,7 @@
       <transition name="fade">
         <div class="container alert" v-show="(vAlert.success==true || vAlert.warning==true)"
               v-bind:class="{ 'alert-success':vAlert.success, 'alert-warning':vAlert.warning }">
-            <span><% vAlert.message %><span>
+            <span v-html="vAlert.message"></span>
         </div>
       </transition>
     </div>
@@ -78,9 +41,6 @@
   </div>
   <script>
   var alert = { success:false, warning:false, message:"", isadmin:false }
-  {{if auth.user and auth.user.email =="kwongsin@skyyer.com":}}
-      alert.isadmin = true;
-  {{pass}}
   var alertVue = new Vue({
       el: '#app-alertVue',
       delimiters: ["<%","%>"],
@@ -104,7 +64,7 @@
               var thisVue = this
               console.log( funcName );
               // Make a request for a user with a given ID
-              axios.get('/mySkyyer/inddpdf/'+ funcName +'?id=123456')
+              axios.get('/indd/pdf/'+ funcName +'?id=123456')
                 .then(function (response) { // handle success
                   console.log('axios success! response.data.success: '+ response.data.success +', id: '+ response.data.id );
                   thisVue.vAlert.success = response.data.success
@@ -182,7 +142,7 @@ $(document).ready(function(){
            //keyID
            { "targets": [ 0 ], "visible":true, "searchable": false, "orderable":false,
              "render": function( data, type, row ){
-                return '<center><a href="/myskyyer/inddpdf/index/'+data+'" class="btn btn-sm text-light btn-dark" style="font-size:1rem;">'+ data +'</a></center>'
+                return '<center><a href="/indd/pdf/index/'+data+'" class="btn btn-sm text-light btn-dark" style="font-size:1rem;">'+ data +'</a></center>'
              }
            },
            //filename
@@ -282,9 +242,9 @@ $(document).ready(function(){
   </div>
   <script>
   $(document).ready(function(){
-    {{if request.args(0):}}
-       $("#pyform").modal({show: true, backdrop: "static"});
-    {{pass}}
+  {{if request.args(0):}}
+    $("#pyform").modal({show: true, backdrop: "static"});
+  {{pass}}
     $(".btn-close").click(function(){
        window.location.assign("{{=URL('index')}}")
     })
@@ -331,7 +291,7 @@ $(document).ready(function(){
             <label for="pdfpreset">pdf preset:</label>
             <select class="form-control form-control-sm inline" style="width:auto" name="pdfpreset" v-model="pdfpreset">
               <option v-for="(child, index) in pdfpresetdefault" :value="child"><% child %></option>
-            <select>
+            </select>
           </div>
         </transition>
 
@@ -341,12 +301,12 @@ $(document).ready(function(){
             <label for="rangetype">page range:</label>
             <div class="form-check-inline">
               <label class="form-check-label">
-                <input type="radio" class="form-check-input" name="rangetype" value="All" v-model="rangetype"> All
+                <input type="radio" class="form-check-input" name="rangetype" value="All" v-model="rangetype"/> All
               </label>
             </div>
             <div class="form-check-inline">
               <label class="form-check-label">
-                <input type="radio" class="form-check-input" name="rangetype" value="Range" v-model="rangetype"> Range
+                <input type="radio" class="form-check-input" name="rangetype" value="Range" v-model="rangetype"/> Range
               </label>
             </div>
 
@@ -357,20 +317,19 @@ $(document).ready(function(){
                     <span class="text-danger"> <% rangestartmessage %> </span>
                     <input id="rangestart" class="form-control form-control-sm inline" style="width:auto"
                     onkeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-                    name="rangestart" type="number" min="1" step="1" v-model="rangestart">
+                    name="rangestart" type="number" min="1" step="1" v-model="rangestart"/>
                   </div>
                   <div class="form-group col-6">
                     <label for="rangeend">end: </label>
                     <span class="text-danger"> <% rangeendmessage %> </span>
                     <input id="rangeend" class="form-control form-control-sm inline" style="width:auto"
                     onkeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-                    name="rangeend" type="number" min="1" step="1" v-model="rangeend">
+                    name="rangeend" type="number" min="1" step="1" v-model="rangeend"/>
                   </div>
               </div>
             </transition>
           </div>
         </transition>
-
 
       </div>
       <!-- Modal footer -->
@@ -385,7 +344,6 @@ $(document).ready(function(){
 </div>
 
 <script>
-
 var folderPathRoot = '/Volumes/Public1';
 
 var FOLDERs = { currentname: "init name",
@@ -510,7 +468,7 @@ var formVue = new Vue({
 
           //console.log('get_folders(): request path: "'+this.currentpath+'"');
           axios({
-            method: 'POST', url: '/myskyyer/inddpdf/getFolders', timeout: 10000,
+            method: 'POST', url: '/indd/pdf/getFolders', timeout: 10000,
             data: { selectfolder:this.currentpath },
             validateStatus: (status) => {
               return true; // I'm always returning true, you may want to do it depending on the status received
@@ -544,7 +502,7 @@ var formVue = new Vue({
           if(event.type=="click"){
               //console.log(event);
               var data = { filepath:this.selectinddfile, pdfpreset:this.pdfpreset, pagerange:this.pagerange }
-              axios.post('/myskyyer/inddpdf/newExportRequest', data )
+              axios.post('/indd/pdf/newExportRequest', data )
               .then(function (result) {
                 $("#app-folderVue").modal("hide");
                 $('#ajaxTable').DataTable().ajax.reload(null, false);

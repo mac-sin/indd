@@ -13,7 +13,12 @@
           initial-scale = 1.0 retains dimensions instead of zooming out if page height > device height
           user-scalable = yes allows the user to zoom in -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{=request.controller}}/{{=request.function}}</title>
+    {{
+      app = request.application
+      ctr = request.controller
+      fnc = request.function
+    }}
+    <title>{{=app}}/{{=ctr}}</title>
     <!-- http://dev.w3.org/html5/markup/meta.name.html -->
     <meta name="application-name" content="{{=request.application}}">
     <!-- Speaking of Google, don't forget to set your site up:
@@ -41,27 +46,17 @@
     <!-- <script src="{{=URL('static','js/modernizr-2.8.3.min.js')}}"></script> -->
     <!-- Favicons -->
     {{include 'web2py_ajax.html'}} <!-- this includes jquery.js, calendar.js/.css and web2py.js -->
-    <!-- ladda -->
-    <link href="{{=URL('static','ladda/ladda-themeless.min.css')}}" rel="stylesheet"/>
-    <script src="{{=URL('static','ladda/spin.min.js')}}"></script>
-    <script src="{{=URL('static','ladda/ladda.min.js')}}"></script>
+
     <!-- production mode -->
     <script src="{{=URL('static','vuejs/vue.min.js')}}"></script>
     <script src="{{=URL('static','vuejs/vuetify.min.js')}}"></script>
-
     <link href="{{=URL('static','vuejs/vuetify.min.css')}}" rel="stylesheet"/>
     <script src="{{=URL('static','axios/axios.min.js')}}"></script>
     <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700,400italic|Material+Icons">
 
     <!-- jqueryui.com/draggable/ -->
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    {{
-      app = request.application
-      ctr = request.controller
-      fnc = request.function
-      myThemes = "#00B400" if fnc=="newtodo" or fnc=="historyNewToDo" else "#3e94ff"
-
-    }}
+    {{ myThemes = "#00B400" if fnc=="newtodo" or fnc=="historyNewToDo" else "#3e94ff" }}
     <style>
     /* body{ margin-bottom: 0!important; } */
     .btn, .dropdown-item{ font-size: 0.8rem; }
@@ -139,6 +134,29 @@
     .block{ display: block; }
     .inline{ display: inline; }
     .inline-block{ display: inline-block; }
+    .no-padding{ padding-left:0px; padding-right:0px; }
+    .no-margin{ margin-left:0px; margin-right:0px; }
+    .text{ word-wrap: break-word; white-space: pre-line; }
+    .bg-gray{ background-color: #ccc; }
+    .border-black{ border: 1px solid black; }
+    .error{ color:red; }
+    pre{ word-wrap: break-word; white-space: pre-line; }
+    code{ color:#08F; }
+    .filename{ font-size:12px; font-weight: bold; }
+    .fa{ font-size:2rem; }
+    .dataTables_processing{ background-color: #555;}
+    .dataTables_length, .dataTables_filter, .dataTables_info, .dataTables_paginate{ font-size: 0.7rem; }
+    @media only screen and (max-width: 768px) {
+      .dataTables_filter input { width: 160px!important;}
+      .dataTables_length, .dataTables_filter{ display: inline }
+      .dataTables_filter{ float: right; position:absolute; right:20px; top:-38px; }
+    }
+    li.active > a.page-link{
+      border-color: #dee2e6!important;
+      background-color: #FFF!important; color:#343a40!important;
+    }
+    input[type=checkbox]{ zoom: 1.7; position: relative; top: 2px; margin:0!important}
+    div.checkbox > label{ font-size: 0.9rem; margin:0!important}
 
     #btn-scrollToTop {
       opacity: 0.9;
@@ -158,6 +176,32 @@
     .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
       opacity: 0;
     }
+
+    /* py form & datatable in dark mode */
+    body{ background-color: #343a40; color: white }
+    input.form-control, select.form-control, textarea.form-control, a.page-link {
+      background-color: #343a40!important; color:white!important;
+    }
+    li.active > a.page-link{
+      border-color: #dee2e6!important;
+      background-color: #FFF!important; color:#343a40!important;
+    }
+    input[type=checkbox]{ zoom: 1.7; position: relative; top: 2px; margin:0!important}
+    div.checkbox > label{ font-size: 0.9rem; margin:0!important}
+    #formVue-processing{
+      display: block;
+      z-index: 999;
+      width: 300px; background-color: #222;
+      border: 1px solid rgba(0,0,0,.125);
+      border-radius: 0.25rem;
+      text-align:center; font-size: 1em;
+      position: absolute;
+      top: 40%; left: 50%;
+      padding:1.2em 0;
+      margin-left: -150px;
+      margin-top: -26px;
+    }
+    #formVue-processing > i.fa{ font-size: 1.1em; margin:0 4px; }
     </style>
     {{block head}}{{end}}
   </head>

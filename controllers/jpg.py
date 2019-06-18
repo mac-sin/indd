@@ -24,7 +24,7 @@ def index():
     # form['_style']='background-color:#343a40'
     if form.process().accepted:
         response.flash = 'record inserted'
-        redirect(URL(r=request,c='inddjpg',f='index'))
+        redirect(URL(r=request,c='jpg',f='index'))
     return locals()
 
 

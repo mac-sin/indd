@@ -3,46 +3,6 @@
 {{include 'cdn_datatables.html'}}
 
 <style type="text/css">
-  nav.navbar{ display:none; }
-  .no-padding{ padding-left:0px; padding-right:0px; }
-  .no-margin{ margin-left:0px; margin-right:0px; }
-  .text{ word-wrap: break-word; white-space: pre-line; }
-  .bg-gray{ background-color: #ccc; }
-  .border-black{ border: 1px solid black; }
-  .error{ color:red; }
-  pre{
-    word-wrap: break-word; white-space: pre-line;
-    }
-  code{ color:#08F; }
-  .filename{ font-size:12px; font-weight: bold; }
-  .fa{ font-size:2rem; }
-  .dataTables_processing{ background-color: #555;}
-  .dataTables_length, .dataTables_filter, .dataTables_info, .dataTables_paginate{ font-size: 0.7rem; }
-  @media only screen and (max-width: 768px) {
-    .dataTables_filter input { width: 160px!important;}
-    .dataTables_length, .dataTables_filter{ display: inline }
-    .dataTables_filter{ float: right; position:absolute; right:20px; top:-38px; }
-  }
-  li.active > a.page-link{
-    border-color: #dee2e6!important;
-    background-color: #FFF!important; color:#343a40!important;
-  }
-  input[type=checkbox]{ zoom: 1.7; position: relative; top: 2px; margin:0!important}
-  div.checkbox > label{ font-size: 0.9rem; margin:0!important}
-  #formVue-processing{
-    display: block;
-    z-index: 999;
-    width: 300px; background-color: #222;
-    border: 1px solid rgba(0,0,0,.125);
-    border-radius: 0.25rem;
-    text-align:center; font-size: 1em;
-    position: absolute;
-    top: 40%; left: 50%;
-    padding:1.2em 0;
-    margin-left: -150px;
-    margin-top: -26px;
-  }
-  #formVue-processing > i.fa{ font-size: 1.1em; margin:0 4px; }
 </style>
 {{end}}
 
@@ -51,6 +11,7 @@
     <h3 class="center">{{=request.controller}}</h3>
     <div class="btn-group">
       <button type="button" class="btn btn-block btn-primary btn-form" data-toggle="modal" data-target="#app-folderVue" data-backdrop="true" onclick="javascript:formVue.init()">New Export</button>
+      <a class="btn btn-block btn-secondary" href="{{=URL('default','onIdle')}}" target="_blank" style="height:33px; margin-top:0;">onIdle</a>
       <div class="dropdown btn-group" v-if="vAlert.isadmin">
         <button type="button" class="btn btn-block btn-primary dropdown-toggle" data-toggle="dropdown">menu</button>
         <div class="dropdown-menu">
@@ -72,7 +33,7 @@
       <transition name="fade">
         <div class="container alert" v-show="(vAlert.success==true || vAlert.warning==true)"
               v-bind:class="{ 'alert-success':vAlert.success, 'alert-warning':vAlert.warning }">
-            <span><% vAlert.message %><span>
+            <span><% vAlert.message %></span>
         </div>
       </transition>
     </div>
@@ -80,9 +41,6 @@
   </div>
   <script>
   var alert = { success:false, warning:false, message:"", isadmin:false }
-  {{if auth.user and auth.user.email =="kwongsin@skyyer.com":}}
-      alert.isadmin = true;
-  {{pass}}
   var alertVue = new Vue({
       el: '#app-alertVue',
       delimiters: ["<%","%>"],
@@ -106,7 +64,7 @@
               var thisVue = this
               console.log( funcName );
               // Make a request for a user with a given ID
-              axios.get('/mySkyyer/inddjpg/'+ funcName +'?id=123456')
+              axios.get('/indd/jpg/'+ funcName +'?id=123456')
                 .then(function (response) { // handle success
                   console.log('axios success! response.data.success: '+ response.data.success +', id: '+ response.data.id );
                   thisVue.vAlert.success = response.data.success
@@ -330,12 +288,12 @@ setInterval( function () {
               <label for="exportRangeOrAllPages">選取範圍:</label>
               <div class="form-check-inline">
                 <label class="form-check-label">
-                  <input type="radio" class="form-check-input" name="exportRangeOrAllPages" value="EXPORT_RANGE" v-model="exportRangeOrAllPages"> 範圍
+                  <input type="radio" class="form-check-input" name="exportRangeOrAllPages" value="EXPORT_RANGE" v-model="exportRangeOrAllPages"/> 範圍
                 </label>
               </div>
               <div class="form-check-inline">
                 <label class="form-check-label">
-                  <input type="radio" class="form-check-input" name="exportRangeOrAllPages" value="EXPORT_ALL" v-model="exportRangeOrAllPages"> 全部
+                  <input type="radio" class="form-check-input" name="exportRangeOrAllPages" value="EXPORT_ALL" v-model="exportRangeOrAllPages"/> 全部
                 </label>
               </div>
             </div>
@@ -347,14 +305,14 @@ setInterval( function () {
                   <span class="text-danger"> <% rangestartmessage %> </span>
                   <input id="rangestart" class="form-control form-control-sm inline" style="width:100%"
                   onkeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-                  name="rangestart" type="number" min="1" step="1" v-model="rangestart">
+                  name="rangestart" type="number" min="1" step="1" v-model="rangestart"/>
                 </div>
                 <div class="form-group col-6">
                   <label for="rangeend">end: </label>
                   <span class="text-danger"> <% rangeendmessage %> </span>
                   <input id="rangeend" class="form-control form-control-sm inline" style="width:100%"
                   onkeyup="this.value=this.value.replace(/[^0-9]/g,'');"
-                  name="rangeend" type="number" min="1" step="1" v-model="rangeend">
+                  name="rangeend" type="number" min="1" step="1" v-model="rangeend"/>
                 </div>
             </div>
 
@@ -362,12 +320,12 @@ setInterval( function () {
               <label for="exportingSpread">單頁/跨頁:</label>
               <div class="form-check-inline">
                 <label class="form-check-label">
-                  <input type="radio" class="form-check-input" name="exportingSpread" value="False" v-model="exportingSpread"> 單頁
+                  <input type="radio" class="form-check-input" name="exportingSpread" value="False" v-model="exportingSpread"/> 單頁
                 </label>
               </div>
               <div class="form-check-inline">
                 <label class="form-check-label">
-                  <input type="radio" class="form-check-input" name="exportingSpread" value="True" v-model="exportingSpread"> 跨頁
+                  <input type="radio" class="form-check-input" name="exportingSpread" value="True" v-model="exportingSpread"/> 跨頁
                 </label>
               </div>
             </div>
@@ -381,14 +339,14 @@ setInterval( function () {
               <label for="jpegQuality">影像品質:</label>
               <select class="form-control form-control-sm inline" style="width:100%" name="jpegQuality" v-model="jpegQuality">
                 <option v-for="(child, index) in jpegQualityDefault" :value="child"><% child %></option>
-              <select>
+              </select>
             </div>
             <div class="form-group col-6" v-show="jpegQuality">
               <!--  -->
               <label for="exportResolution">解析度(ppi):</label>
               <select class="form-control form-control-sm inline" style="width:100%" name="exportResolution" v-model="exportResolution">
                 <option v-for="(child, index) in exportResolutionDefault" :value="child"><% child %></option>
-              <select>
+              </select>
             </div>
           </div>
         </transition>
@@ -542,7 +500,7 @@ var formVue = new Vue({
           //set web store...
           localStorage.currentpath = this.currentpath
           axios({
-            method: 'POST', url: '/myskyyer/inddjpg/getFolders', timeout: 10000,
+            method: 'POST', url: '/indd/jpg/getFolders', timeout: 10000,
             data: { selectfolder:this.currentpath },
             validateStatus: (status) => {
               return true; // I'm always returning true, you may want to do it depending on the status received
@@ -609,7 +567,7 @@ var formVue = new Vue({
           if(event.type=="click"){
               //console.log(event);
               var data = { id:this.id, filepath:this.selectinddfile, exportRangeOrAllPages:this.exportRangeOrAllPages, pageString:this.pageString, exportingSpread:this.exportingSpread, jpegQuality:this.jpegQuality, exportResolution:this.exportResolution  }
-              axios.post('/myskyyer/inddjpg/newExportRequest', data )
+              axios.post('/indd/jpg/newExportRequest', data )
               .then(function (result) {
                 $("#app-folderVue").modal("hide");
                 $('#ajaxTable').DataTable().ajax.reload(null, false);
